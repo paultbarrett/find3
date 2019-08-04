@@ -2,7 +2,9 @@
 # mkdir /tmp/find3
 # docker run -p 11883:1883 -p 8003:8003 -v /tmp/find3:/data -t find3
 
-FROM ubuntu:18.04
+FROM resin/armv7hf-ubuntu
+
+RUN [ "cross-build-start" ]
 
 ENV GOLANG_VERSION 1.11
 ENV PATH="/usr/local/go/bin:/usr/local/work/bin:${PATH}"
@@ -97,4 +99,6 @@ pid_file /data/mosquitto_config/pid\n'\
 
 WORKDIR /app
 CMD ["/app/startup.sh"]
+
+RUN [ "cross-build-end" ]
 
