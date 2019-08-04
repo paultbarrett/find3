@@ -2,14 +2,14 @@
 # mkdir /tmp/find3
 # docker run -p 11883:1883 -p 8003:8003 -v /tmp/find3:/data -t find3
 
-FROM ubuntu:18.04
+FROM resin/rpi-raspbian
 
 ENV GOLANG_VERSION 1.11
 ENV PATH="/usr/local/go/bin:/usr/local/work/bin:${PATH}"
 ENV GOPATH /usr/local/work
 ENV GO111MODULE=on
 # RUN apt-get update && apt-get -y upgrade && \
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y wget git libc6-dev make pkg-config g++ gcc mosquitto-clients mosquitto python3 python3-dev python3-pip python3-setuptools python3-wheel supervisor libfreetype6-dev python3-matplotlib python3-scipy python3-numpy libopenblas-dev libblas-dev liblapack-dev gfortran && \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y wget git libc6-dev make pkg-config g++ gcc python3 python3-dev python3-pip python3-setuptools python3-wheel supervisor libfreetype6-dev python3-matplotlib python3-scipy python3-numpy libopenblas-dev libblas-dev liblapack-dev gfortran && \
 	mkdir /usr/local/work && \
 	rm -rf /var/lib/apt/lists/* && \
 	set -eux; \
@@ -48,9 +48,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-instal
 	mkdir /data && \
 	mkdir /app && \
 	echo '#!/bin/bash\n\
-pkill -9 mosquitto\n\
-cp -R -u -p /app/mosquitto_config /data\n\
-mosquitto -d -c /data/mosquitto_config/mosquitto.conf\n\
 mkdir -p /data/logs\n\
 /usr/bin/supervisord\n'\
 > /app/startup.sh && \
@@ -73,13 +70,6 @@ stdout_logfile_maxbytes=0\n\
 stderr_logfile=/data/logs/ai.stderr\n\
 stderr_logfile_maxbytes=0\n'\
 > /etc/supervisor/conf.d/supervisord.conf && \
-	mkdir /app/mosquitto_config && \
-	touch /app/mosquitto_config/acl  && \
-	touch /app/mosquitto_config/passwd  && echo 'allow_anonymous false\n\
-acl_file /data/mosquitto_config/acl\n\
-password_file /data/mosquitto_config/passwd\n\
-pid_file /data/mosquitto_config/pid\n'\
-> /app/mosquitto_config/mosquitto.conf && \
 	echo "moving to find3" && cd /build/find3/server/main  && go build -v && \
 	echo "moving main" && mv /build/find3/server/main /app/main && \
 	echo "moving to ai" && cd /build/find3/server/ai  && python3 -m pip install -r requirements.txt && \
